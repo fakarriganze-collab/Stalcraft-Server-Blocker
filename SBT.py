@@ -10,6 +10,8 @@ import select
 import shutil
 import tempfile
 import atexit
+import urllib.request
+import hashlib
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QTreeWidget, QTreeWidgetItem, QAbstractItemView,
@@ -46,6 +48,27 @@ def get_base_path():
     else:
         return os.path.dirname(os.path.abspath(__file__))
 
+def file_hash(path):
+    if not os.path.exists(path):
+        return None
+    with open(path, "rb") as f:
+        return hashlib.md5(f.read()).hexdigest()
+
+def update_servers_json(local_path):
+    url = "https://raw.githubusercontent.com/FakeAngles/Stalcraft-Server-Blocker/refs/heads/main/Servers.json"
+    try:
+        with urllib.request.urlopen(url, timeout=10) as response:
+            data = response.read()
+        new_hash = hashlib.md5(data).hexdigest()
+        if new_hash != file_hash(local_path):
+            with open(local_path, "wb") as f:
+                f.write(data)
+            print("Servers.json updated.")
+        else:
+            print("Servers.json already up to date.")
+    except Exception as e:
+        print(f"Failed to update Servers.json: {e}. Using local copy if present.")
+
 class ServerBlocker(QMainWindow):
     update_ping_results = pyqtSignal(list)
 
@@ -54,6 +77,8 @@ class ServerBlocker(QMainWindow):
         self.base_path = get_base_path()
         self.servers_file = os.path.join(self.base_path, "Servers.json")
         self.settings_file = os.path.join(self.base_path, "Settings.json")
+        update_servers_json(self.servers_file)
+
         self.trans = {
             "en": {
                 "window_title": "Stalcraft Server Blocker",
@@ -110,19 +135,23 @@ class ServerBlocker(QMainWindow):
                 "choose_language": "Пожалуйста, выберите предпочитаемый язык:"
             }
         }
+
         self.selected = self.load_selected()
         self.current_region = self.load_region()
         self.language = self.load_language()
         if self.language is None:
             self.language = self.ask_language()
             self.save_settings()
+
         self.setWindowTitle(self.trans[self.language]["window_title"])
         self.setFixedSize(800, 600)
+
         try:
             with open(self.servers_file, "r", encoding="utf-8") as f:
                 self.data = json.load(f)
         except FileNotFoundError:
-            QMessageBox.critical(self, self.trans[self.language]["error"], self.trans[self.language]["file_not_found"].format(self.base_path))
+            QMessageBox.critical(self, self.trans[self.language]["error"],
+                                 self.trans[self.language]["file_not_found"].format(self.base_path))
             sys.exit(1)
 
         self.stop_flag = False
@@ -255,6 +284,7 @@ class ServerBlocker(QMainWindow):
         main_layout = QVBoxLayout(central)
         main_layout.setContentsMargins(10, 10, 10, 10)
         main_layout.setSpacing(10)
+
         region_layout = QHBoxLayout()
         region_layout.setSpacing(5)
         regions = ["EU", "NA", "RU", "SEA"]
@@ -290,6 +320,7 @@ class ServerBlocker(QMainWindow):
             region_layout.addWidget(btn)
             self.region_buttons[region] = btn
         main_layout.addLayout(region_layout)
+
         self.tree = QTreeWidget()
         self.tree.setHeaderHidden(True)
         self.tree.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
@@ -335,9 +366,6 @@ class ServerBlocker(QMainWindow):
                 background-color: #FF00FF;
                 border: 2px solid #FF00FF;
             }
-            QTreeWidget::indicator:unchecked:hover {
-                background-color: #2a2a2a;
-            }
             QScrollBar:vertical {
                 background-color: #0a0a0a;
                 width: 12px;
@@ -368,11 +396,13 @@ class ServerBlocker(QMainWindow):
         content_layout = QHBoxLayout()
         content_layout.setSpacing(10)
         content_layout.addWidget(self.tree, 2)
+
         right_panel = QVBoxLayout()
         right_panel.setAlignment(Qt.AlignmentFlag.AlignTop)
         right_panel.setSpacing(10)
         content_layout.addLayout(right_panel, 1)
         main_layout.addLayout(content_layout)
+
         title = QLabel("SBT")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title.setStyleSheet("""
@@ -383,6 +413,7 @@ class ServerBlocker(QMainWindow):
             font-family: 'Arial';
         """)
         right_panel.addWidget(title)
+
         line = QFrame()
         line.setFrameShape(QFrame.Shape.HLine)
         line.setFrameShadow(QFrame.Shadow.Sunken)
@@ -392,8 +423,10 @@ class ServerBlocker(QMainWindow):
             margin: 10px 0;
         """)
         right_panel.addWidget(line)
+
         buttons_layout = QHBoxLayout()
         buttons_layout.setSpacing(5)
+
         self.start_btn = QPushButton(self.trans[self.language]["block"])
         self.start_btn.clicked.connect(self.start_blocking)
         self.start_btn.setStyleSheet("""
@@ -420,6 +453,7 @@ class ServerBlocker(QMainWindow):
             }
         """)
         buttons_layout.addWidget(self.start_btn)
+
         self.stop_btn = QPushButton(self.trans[self.language]["unblock"])
         self.stop_btn.clicked.connect(self.stop_blocking)
         self.stop_btn.setEnabled(False)
@@ -447,6 +481,7 @@ class ServerBlocker(QMainWindow):
             }
         """)
         buttons_layout.addWidget(self.stop_btn)
+
         self.ping_btn = QPushButton(self.trans[self.language]["check_ping"])
         self.ping_btn.clicked.connect(self.check_ping)
         self.ping_btn.setStyleSheet("""
@@ -473,7 +508,9 @@ class ServerBlocker(QMainWindow):
             }
         """)
         buttons_layout.addWidget(self.ping_btn)
+
         right_panel.addLayout(buttons_layout)
+
         line2 = QFrame()
         line2.setFrameShape(QFrame.Shape.HLine)
         line2.setFrameShadow(QFrame.Shadow.Sunken)
@@ -483,6 +520,7 @@ class ServerBlocker(QMainWindow):
             margin: 10px 0;
         """)
         right_panel.addWidget(line2)
+
         self.status_label = QLabel(self.trans[self.language]["selected_servers"].format(len(self.selected)))
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.status_label.setStyleSheet("""
@@ -495,6 +533,7 @@ class ServerBlocker(QMainWindow):
             font-family: 'Arial';
         """)
         right_panel.addWidget(self.status_label)
+
         self.ping_results = QTextEdit()
         self.ping_results.setReadOnly(True)
         self.ping_results.setFixedHeight(250)
@@ -510,6 +549,7 @@ class ServerBlocker(QMainWindow):
             }
         """)
         right_panel.addWidget(self.ping_results)
+
         usage_label = QLabel(self.trans[self.language]["usage"])
         usage_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         usage_label.setWordWrap(True)
@@ -521,7 +561,9 @@ class ServerBlocker(QMainWindow):
             font-family: 'Arial';
         """)
         right_panel.addWidget(usage_label)
+
         right_panel.addStretch(1)
+
         credit_label = QLabel("by YungDaggerStab & WeedSellerBand")
         credit_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         credit_label.setStyleSheet("""
@@ -530,6 +572,7 @@ class ServerBlocker(QMainWindow):
             font-family: 'Arial';
         """)
         right_panel.addWidget(credit_label)
+
         self.initializing = True
         self.populate_tree()
         self.initializing = False
@@ -544,13 +587,17 @@ class ServerBlocker(QMainWindow):
 
     def populate_tree(self):
         self.tree.clear()
+
         def add_items(parent, data):
             for entry in data:
                 if "address" in entry:
                     item = QTreeWidgetItem(parent, [entry["name"]])
                     item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
                     item.setData(0, Qt.ItemDataRole.UserRole, {"type": "server", "address": entry["address"]})
-                    item.setCheckState(0, Qt.CheckState.Checked if entry["address"] in self.selected else Qt.CheckState.Unchecked)
+                    item.setCheckState(
+                        0,
+                        Qt.CheckState.Checked if entry["address"] in self.selected else Qt.CheckState.Unchecked
+                    )
                 else:
                     if entry.get("region") == self.current_region:
                         item = QTreeWidgetItem(parent, [entry["name"]])
@@ -558,6 +605,7 @@ class ServerBlocker(QMainWindow):
                         item.setCheckState(0, Qt.CheckState.Unchecked)
                         if "tunnels" in entry and entry["tunnels"]:
                             add_items(item, entry["tunnels"])
+
         add_items(self.tree.invisibleRootItem(), self.data["pools"])
         self.tree.expandAll()
         self.status_label.setText(self.trans[self.language]["selected_servers"].format(len(self.selected)))
@@ -660,7 +708,11 @@ class ServerBlocker(QMainWindow):
                 if not current_selected:
                     break
                 ip_filters = " or ".join(f"ip.DstAddr == {ip}" for ip in current_selected)
-                filter_str = f"outbound and ({ip_filters}) and (tcp.DstPort >= 29450 and tcp.DstPort <= 29460 or udp.DstPort >= 29450 and udp.DstPort <= 29460)"
+                filter_str = (
+                    f"outbound and ({ip_filters}) and "
+                    f"(tcp.DstPort >= 29450 and tcp.DstPort <= 29460 or "
+                    f"udp.DstPort >= 29450 and udp.DstPort <= 29460)"
+                )
                 try:
                     self.divert = pydivert.WinDivert(filter_str)
                     self.divert.open()
@@ -671,7 +723,7 @@ class ServerBlocker(QMainWindow):
                 packets = self.divert.recv(num=500, timeout=0.01)
                 for packet in packets:
                     pass
-            except Exception as e:
+            except Exception:
                 if self.stop_flag:
                     break
                 time.sleep(0.1)
@@ -694,12 +746,12 @@ class ServerBlocker(QMainWindow):
         if len(data) % 2:
             data += b'\x00'
         words = struct.unpack('!%dH' % (len(data) // 2), data)
-        sum = 0
+        s = 0
         for word in words:
-            sum += word
-        sum = (sum >> 16) + (sum & 0xFFFF)
-        sum += sum >> 16
-        return ~sum & 0xFFFF
+            s += word
+        s = (s >> 16) + (s & 0xFFFF)
+        s += s >> 16
+        return ~s & 0xFFFF
 
     def ping(self, host, timeout=1):
         try:
