@@ -81,6 +81,7 @@
         { "name": "MSK2-16", "address": "95.213.255.22:29450" }
       ]
     },
+    /* Пока не включены
     {
       "name": "MSK1-512",
       "region": "RU",
@@ -107,6 +108,7 @@
         { "name": "MSK1-14", "address": "95.213.255.55:29450" }
       ]
     },
+    */
     {
       "name": "MSK2X",
       "region": "RU",
@@ -118,6 +120,17 @@
         { "name": "MSK2-ROXY5", "address": "5.188.131.40:29450" },
         { "name": "MSK2-ROXY7", "address": "185.175.47.241:29450" },
         { "name": "MSK2-ROXY8", "address": "5.35.3.242:29450" }
+      ]
+    },
+    {
+      "name": "SPB3",
+      "region": "RU",
+      "tunnels": [
+        { "name": "SPB3-ROXY16", "address": "94.26.255.68:29450" },
+        { "name": "SPB3-ROXY17", "address": "94.26.255.69:29450" },
+        { "name": "SPB3-ROXY18", "address": "94.26.255.70:29450" },
+        { "name": "SPB3-ROXY19", "address": "94.26.255.71:29450" },
+        { "name": "SPB3-ROXY20", "address": "94.26.255.72:29450" }
       ]
     },
     {
