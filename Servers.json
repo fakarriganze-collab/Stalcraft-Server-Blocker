@@ -81,7 +81,6 @@
         { "name": "MSK2-16", "address": "95.213.255.22:29450" }
       ]
     },
-    /* Пока не включены
     {
       "name": "MSK1-512",
       "region": "RU",
@@ -108,7 +107,6 @@
         { "name": "MSK1-14", "address": "95.213.255.55:29450" }
       ]
     },
-    */
     {
       "name": "MSK2X",
       "region": "RU",
@@ -248,3 +246,4 @@
   ],
   "clientToTunnelRttWeight": 1
 }
+
