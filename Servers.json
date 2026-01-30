@@ -82,32 +82,6 @@
       ]
     },
     {
-      "name": "MSK1-512",
-      "region": "RU",
-      "tunnels": [
-        { "name": "MSK1-1", "address": "85.119.149.7:29450" },
-        { "name": "MSK1-2", "address": "85.119.149.8:29450" },
-        { "name": "MSK1-3", "address": "85.119.149.9:29450" },
-        { "name": "MSK1-4", "address": "85.119.149.10:29450" },
-        { "name": "MSK1-5", "address": "85.119.149.25:29450" },
-        { "name": "MSK1-6", "address": "85.119.149.27:29450" },
-        { "name": "MSK1-7", "address": "85.119.149.155:29450" },
-        { "name": "MSK1-8", "address": "85.119.149.166:29450" },
-        { "name": "MSK1-9", "address": "85.119.149.169:29450" }
-      ]
-    },
-    {
-      "name": "MSK1-256",
-      "region": "RU",
-      "tunnels": [
-        { "name": "MSK1-10", "address": "85.119.149.203:29450" },
-        { "name": "MSK1-11", "address": "95.213.255.51:29450" },
-        { "name": "MSK1-12", "address": "95.213.255.53:29450" },
-        { "name": "MSK1-13", "address": "95.213.255.54:29450" },
-        { "name": "MSK1-14", "address": "95.213.255.55:29450" }
-      ]
-    },
-    {
       "name": "MSK2X",
       "region": "RU",
       "tunnels": [
@@ -246,4 +220,5 @@
   ],
   "clientToTunnelRttWeight": 1
 }
+
 
